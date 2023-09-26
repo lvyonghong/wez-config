@@ -71,6 +71,14 @@ end)
 return {
     -- color_schemas
     color_scheme = "OLEDppuccin",
+    -- 自定义配色
+    colors = {
+        cursor_bg = '#c8c093',
+        cursor_fg = '#c8c093',
+        cursor_border = '#c8c093',
+        scrollbar_thumb = '#444444',
+        split = '#233222',
+    },
     font = wezterm.font_with_fallback {
         { family = 'JetBrainsMono Nerd Font Mono', weight = 'DemiBold', scale = 1.0 },
         { family = 'JetBrains Mono',               weight = 'DemiBold' }
