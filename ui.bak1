@@ -1,0 +1,202 @@
+local wezterm = require 'wezterm'
+
+local format_title = function(title, is_active, max_width)
+    local background = { Background = { Color = '#1f1f28' } }
+    local title_len = #title
+    local pad_len = math.floor((max_width - title_len) / 2)
+
+    local formatted_title = {
+        Text = string.rep(' ', pad_len) .. title .. string.rep(' ', pad_len)
+    }
+    if is_active then
+        return { background = { Color = '#666666'}, { Foreground = { Color = '#957fb8' } }, formatted_title }
+    else
+        return { background, { Foreground = { Color = '#cad3f5' } }, formatted_title }
+    end
+end
+
+local basename = function(s)
+    return string.gsub(s, "(.*[/\\])(.*)", "%2")
+end
+
+wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
+    local pane = tab.active_pane
+    local title = tab.tab_index + 1 .. ":" .. basename(pane.foreground_process_name)
+    return format_title(title, tab.is_active, max_width)
+end)
+
+wezterm.on('update-right-status', function(window, pane)
+  -- Each element holds the text for a cell in a "powerline" style << fade
+  local cells = {}
+
+  -- Figure out the cwd and host of the current pane.
+  -- This will pick up the hostname for the remote host if your
+  -- shell is using OSC 7 on the remote host.
+  local cwd_uri = pane:get_current_working_dir()
+  if cwd_uri then
+    cwd_uri = cwd_uri:sub(8)
+    local slash = cwd_uri:find '/'
+    local cwd = ''
+    local hostname = ''
+    if slash then
+      hostname = cwd_uri:sub(1, slash - 1)
+      -- Remove the domain name portion of the hostname
+      local dot = hostname:find '[.]'
+      if dot then
+        hostname = hostname:sub(1, dot - 1)
+      end
+      -- and extract the cwd from the uri
+      cwd = cwd_uri:sub(slash)
+
+      table.insert(cells, cwd)
+      table.insert(cells, hostname)
+    end
+  end
+
+  -- I like my date/time in this style: "Wed Mar 3 08:14"
+  local date = wezterm.strftime '%a %b %-d %H:%M'
+  table.insert(cells, date)
+
+  -- An entry for each battery (typically 0 or 1 battery)
+  for _, b in ipairs(wezterm.battery_info()) do
+    table.insert(cells, string.format('%.0f%%', b.state_of_charge * 100))
+  end
+
+  -- The powerline < symbol
+  local LEFT_ARROW = utf8.char(0xe0b3)
+  -- The filled in variant of the < symbol
+  local SOLID_LEFT_ARROW = utf8.char(0xe0b2)
+
+  -- Color palette for the backgrounds of each cell
+  local colors = {
+    '#3c1361',
+    '#52307c',
+    '#663a82',
+    '#7c5295',
+    '#b491c8',
+  }
+
+  -- Foreground color for the text across the fade
+  local text_fg = '#c0c0c0'
+
+  -- The elements to be formatted
+  local elements = {}
+  -- How many cells have been formatted
+  local num_cells = 0
+
+  -- Translate a cell into elements
+  function push(text, is_last)
+    local cell_no = num_cells + 1
+    table.insert(elements, { Foreground = { Color = text_fg } })
+    table.insert(elements, { Background = { Color = colors[cell_no] } })
+    table.insert(elements, { Text = ' ' .. text .. ' ' })
+    if not is_last then
+      table.insert(elements, { Foreground = { Color = colors[cell_no + 1] } })
+      table.insert(elements, { Text = SOLID_LEFT_ARROW })
+    end
+    num_cells = num_cells + 1
+  end
+
+  while #cells > 0 do
+    local cell = table.remove(cells, 1)
+    push(cell, #cells == 0)
+  end
+
+  window:set_right_status(wezterm.format(elements))
+end)
+
+
+wezterm.on('format-window-title', function(tab, pane, tabs, panes, config)
+  local zoomed = ''
+  if tab.active_pane.is_zoomed then
+    zoomed = '[Z] '
+  end
+
+  local index = ''
+  if #tabs > 1 then
+    index = string.format('[%d/%d] ', tab.tab_index + 1, #tabs)
+  end
+
+  return zoomed .. index .. tab.active_pane.title
+end)
+
+local user_var_tab_title_key = 'tab_title'
+wezterm.on('user-var-changed', function(window, pane, name, value)
+    wezterm.log_info('user-var-changed', name, value)
+    if name == user_var_tab_title_key then pane:tab():set_title(value) end
+end)
+
+return {
+    -- color_schemas
+    color_scheme = "OLEDppuccin",
+
+    -- 自定义配色
+    colors = {
+        -- tab配置
+        tab_bar = {
+            -- The color of the inactive tab bar edge/divider
+            background = '#1f1f28',
+            new_tab = { bg_color = '#1f1f28', fg_color = '#dcd7ba' },
+            inactive_tab_edge = '#575757'
+        },
+        foreground = '#dcd7ba',
+        background = '#1f1f28',
+
+        cursor_bg = '#c8c093',
+        cursor_fg = '#c8c093',
+        cursor_border = '#c8c093',
+
+        selection_fg = '#c8c093',
+        selection_bg = '#2d4f67',
+
+        scrollbar_thumb = '#16161d',
+        split = '#16161d',
+
+        ansi = {
+            '#090618',
+            '#c34043',
+            '#76946a',
+            '#c0a36e',
+            '#7e9cd8',
+            '#957fb8',
+            '#6a9589',
+            '#c8c093'
+        },
+        brights = {
+            '#727169',
+            '#e82424',
+            '#98bb6c',
+            '#e6c384',
+            '#7fb4ca',
+            '#938aa9',
+            '#7aa89f',
+            '#dcd7ba'
+        },
+        indexed = { [16] = '#ffa066', [17] = '#ff5d62' }
+    },
+    font = wezterm.font_with_fallback {
+        { family = 'JetBrainsMono Nerd Font Mono', weight = 'DemiBold', scale= 1.0 }, 
+        { family = 'JetBrains Mono', weight = 'Bold'}
+    },
+    font_size = 16,
+    line_height = 1.2,
+    tab_max_width = 24,
+    window_decorations = 'INTEGRATED_BUTTONS | RESIZE',
+    window_background_opacity = 1.0,
+    tab_bar_at_bottom = false,
+    use_fancy_tab_bar = true,
+    show_tab_index_in_tab_bar = true,
+    show_new_tab_button_in_tab_bar = false;
+    tab_and_split_indices_are_zero_based = false,
+    window_frame = {
+        font = wezterm.font { family = 'JetBrainsMono Nerd Font Mono', weight = 'Bold' },
+        inactive_titlebar_bg = '#353535',
+        active_titlebar_bg = '#2b2042',
+        inactive_titlebar_fg = '#cccccc',
+        active_titlebar_fg = '#ffffff',
+        inactive_titlebar_border_bottom = '#2b9042',
+        active_titlebar_border_bottom = '#4b2042',
+    },
+    enable_scroll_bar = true,
+    min_scroll_bar_height = "0.5cell"
+}
