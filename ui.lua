@@ -88,7 +88,8 @@ return {
     tab_max_width = 24,
     -- window_decorations = 'INTEGRATED_BUTTONS | RESIZE',
     window_decorations = 'MACOS_FORCE_ENABLE_SHADOW',
-    window_background_opacity = 0.8,
+    window_background_opacity = 0.85,
+    text_background_opacity = 0.5,
     tab_bar_at_bottom = true,
     use_fancy_tab_bar = true,
     show_tab_index_in_tab_bar = true,
@@ -98,6 +99,10 @@ return {
     window_frame = {
         inactive_titlebar_bg = '#353535',
         active_titlebar_bg = '#2b2042',
+    },
+    inactive_pane_hsb = {
+        saturation = 0.8,
+        brightness = 0.2,
     },
     -- min_scroll_bar_height = "0.5cell"
 }
