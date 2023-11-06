@@ -85,12 +85,12 @@ return {
     },
     font_size = 14,
     line_height = 1.2,
-    tab_max_width = 24,
-    -- window_decorations = 'INTEGRATED_BUTTONS | RESIZE',
-    window_decorations = 'MACOS_FORCE_ENABLE_SHADOW',
+    tab_max_width = 36,
+    window_decorations = 'INTEGRATED_BUTTONS | RESIZE',
+    -- window_decorations = 'MACOS_FORCE_ENABLE_SHADOW',
     window_background_opacity = 0.85,
     text_background_opacity = 0.5,
-    tab_bar_at_bottom = true,
+    tab_bar_at_bottom = false,
     use_fancy_tab_bar = true,
     show_tab_index_in_tab_bar = true,
     show_new_tab_button_in_tab_bar = false,
@@ -104,5 +104,4 @@ return {
         saturation = 0.8,
         brightness = 0.2,
     },
-    -- min_scroll_bar_height = "0.5cell"
 }
